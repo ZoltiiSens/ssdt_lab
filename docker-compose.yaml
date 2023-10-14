@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+ ssdt_lab:
+   restart: always
+   build:
+     context: .
+     dockerfile: ./dockerfile
+   ports:
+     - "5000:5000"
