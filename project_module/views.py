@@ -7,7 +7,7 @@ from datetime import date
 app = Flask(__name__)
 users = {}
 categories = {}
-record = {}
+records = {}
 
 
 @app.get("/user/<user_id>")
@@ -32,7 +32,10 @@ def delete_user(user_id):
 def create_user():
     newUserData = request.get_json()
     newUserId = uuid.uuid4().hex
-    newUser = {"id": newUserId, **newUserData}
+    newUser = {
+        "id": newUserId,
+        **newUserData
+    }
     users[newUserId] = newUser
     return jsonify(newUser), 200
 
@@ -44,32 +47,92 @@ def get_users():
 
 @app.get("/category")
 def get_category():
-    return "getcategory", 200
+    category_id = request.get_json()["id"]
+    if category_id in categories.keys():
+        return categories[category_id], 200
+    else:
+        return jsonify({}), 400
 
 
 @app.post("/category")
 def create_category():
-    return "createcategory", 200
+    newCategoryData = request.get_json()
+    newCategoryId = uuid.uuid4().hex
+    newCategory = {
+        "id": newCategoryId,
+        **newCategoryData
+    }
+    categories[newCategoryId] = newCategory
+    return jsonify(newCategory), 200
 
 
 @app.delete("/category")
 def delete_category():
-    return "deletecategory", 200
+    category_id = request.get_json()["id"]
+    if category_id in categories.keys():
+        category = categories[category_id]
+        del categories[category_id]
+        return jsonify(category), 200
+    else:
+        return jsonify({}), 400
 
 
-@app.get("/record/<int:record_id>")
+@app.get("/categories")
+def get_categories():
+    return jsonify(list(categories.values())), 200
+
+
+@app.get("/record/<record_id>")
 def get_record(record_id):
-    return f"getrecord {record_id}", 200
+    if record_id in records.keys():
+        return records[record_id], 200
+    else:
+        return jsonify({}), 400
 
 
-@app.delete("/record/<int:record_id>")
+@app.delete("/record/<record_id>")
 def delete_record(record_id):
-    return f"deleterecord {record_id}", 200
+    if record_id in records.keys():
+        record = records[record_id]
+        del records[record_id]
+        return jsonify(record), 200
+    else:
+        return jsonify({}), 400
 
 
 @app.post("/record")
 def create_record():
-    return f"createrecord", 200
+    newRecordData = request.get_json()
+    newRecordId = uuid.uuid4().hex
+    newRecord = {
+        "id": newRecordId,
+        "creation_date": date.today(),
+        **newRecordData
+    }
+    records[newRecordId] = newRecord
+    return jsonify(newRecord), 200
+
+
+@app.get("/record")
+def get_filtered_records():
+    categoryId = request.args.get('category_id')
+    userId = request.args.get('user_id')
+    result = []
+    if categoryId is None and userId is None:
+        return jsonify({"message": "pass at least one argument: category_id, user_id"}), 400
+    if userId is None:
+        for record in records.values():
+            if record["category_id"] == categoryId:
+                result.append(record)
+    elif categoryId is None:
+        for record in records.values():
+            if record["user_id"] == userId:
+                result.append(record)
+    else:
+        for record in records.values():
+            if record["user_id"] == userId and record["category_id"] == categoryId:
+                result.append(record)
+    return jsonify(result), 200
 
 
 @app.route("/")
