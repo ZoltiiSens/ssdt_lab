@@ -3,7 +3,6 @@ import uuid
 from flask import Flask, jsonify, request
 from datetime import date
 
-
 app = Flask(__name__)
 users = {}
 categories = {}
@@ -37,7 +36,7 @@ def create_user():
         **newUserData
     }
     users[newUserId] = newUser
-    return jsonify(newUser), 200
+    return newUser, 200
 
 
 @app.get("/users")
@@ -47,7 +46,7 @@ def get_users():
 
 @app.get("/category")
 def get_category():
-    category_id = request.get_json()["id"]
+    category_id = request.args.get("id")
     if category_id in categories.keys():
         return categories[category_id], 200
     else:
@@ -56,11 +55,11 @@ def get_category():
 
 @app.post("/category")
 def create_category():
-    newCategoryData = request.get_json()
+    newCategoryName = request.args.get("name")
     newCategoryId = uuid.uuid4().hex
     newCategory = {
         "id": newCategoryId,
-        **newCategoryData
+        "name": newCategoryName,
     }
     categories[newCategoryId] = newCategory
     return jsonify(newCategory), 200
@@ -68,7 +67,7 @@ def create_category():
 
 @app.delete("/category")
 def delete_category():
-    category_id = request.get_json()["id"]
+    category_id = request.args.get("id")
     if category_id in categories.keys():
         category = categories[category_id]
         del categories[category_id]
@@ -102,12 +101,13 @@ def delete_record(record_id):
 
 @app.post("/record")
 def create_record():
-    newRecordData = request.get_json()
     newRecordId = uuid.uuid4().hex
     newRecord = {
         "id": newRecordId,
         "creation_date": date.today(),
-        **newRecordData
+        "sum": request.args.get("sum"),
+        "user_id": request.args.get("user_id"),
+        "category_id": request.args.get("category_id")
     }
     records[newRecordId] = newRecord
     return jsonify(newRecord), 200
@@ -118,13 +118,13 @@ def get_filtered_records():
     categoryId = request.args.get('category_id')
     userId = request.args.get('user_id')
     result = []
-    if categoryId is None and userId is None:
+    if not categoryId and not userId:
         return jsonify({"message": "pass at least one argument: category_id, user_id"}), 400
-    if userId is None:
+    if not userId:
         for record in records.values():
             if record["category_id"] == categoryId:
                 result.append(record)
-    elif categoryId is None:
+    elif not categoryId:
         for record in records.values():
             if record["user_id"] == userId:
                 result.append(record)
