@@ -1,9 +1,9 @@
 import uuid
 
-from flask import Flask, jsonify, request
+from flask import jsonify, request
 from datetime import date
+from project_module import app
 
-app = Flask(__name__)
 users = {}
 categories = {}
 records = {}
