@@ -1,10 +1,24 @@
 version: '3'
 
 services:
- ssdt_lab:
-   restart: always
-   build:
-     context: .
-     dockerfile: ./dockerfile
-   ports:
+  ssdt_lab:
+    restart: always
+    build:
+      context: .
+      dockerfile: ./dockerfile
+    ports:
      - "5000:5000"
+    environment:
+      PORT: 5000
+      DB_USER: "ssdtDBuser"
+      DB_PASSWORD: "ssdtDBuser"
+      DB_NAME: "ssdtDB"
+      DB_HOST: "db:5544"
+  db:
+    image: postgres:15.4-alpine3.18
+    environment:
+      POSTGRES_USER: "ssdtDBuser"
+      POSTGRES_PASSWORD: "ssdtDBuser"
+      POSTGRES_DB: "ssdtDB"
+    ports:
+      - "5544:5544"
