@@ -38,18 +38,18 @@ class RecordModel(db.Model):
     )
 
     user = db.relationship("UserModel", back_populates="record")
-    category = db.relationship("RecordModel", back_populates="record")
+    category = db.relationship("CategoryModel", back_populates="record")
 
 
 class AccountModel(db.Model):
     __tablename__ = "account"
 
     id = db.Column(db.Integer, primary_key=True)
-    sum = db.Column(db.Float, unique=False, nullable=False)
+    sum = db.Column(db.Float, unique=False, nullable=False, default=0)
     user_id = db.Column(
         db.Integer,
         db.ForeignKey("user.id"),
-        unique=False,
+        unique=True,
         nullable=False
     )
 
