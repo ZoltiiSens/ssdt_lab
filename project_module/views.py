@@ -205,6 +205,14 @@ def get_account(account_id):
     return response, 200
 
 
+@app.delete("/account/<account_id>")
+def delete_account(account_id):
+    account = AccountModel.query.get_or_404(account_id)
+    db.session.delete(account)
+    db.session.commit()
+    return {"message": f"Success! Account {account_id} deleted"}
+
+
 @app.put("/account/<account_id>")
 def put_account(account_id):
     account = AccountModel.query.get_or_404(account_id)
