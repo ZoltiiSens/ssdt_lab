@@ -1,19 +1,35 @@
 from flask import jsonify, request
-# from flask_smorest import abort
 from datetime import date
+
+from flask_jwt_extended import create_access_token
 from marshmallow import ValidationError
+from passlib.handlers.pbkdf2 import pbkdf2_sha256
 from sqlalchemy.exc import IntegrityError
-from project_module import app, db
+from project_module import app, db, jwt
 from project_module.schemas import UserSchema, RecordSchema, AccountSchema, CategorySchema
 from project_module.models import UserModel, RecordModel, AccountModel, CategoryModel
 
 with app.app_context():
     db.create_all()
-    db.create_all()
     db.session.commit()
 
 
 # Work with User
+@app.post("/user/login")
+def login_user():
+    userData = request.args
+    user_validation = UserSchema()
+    try:
+        user_validation.load(userData)
+    except ValidationError as err:
+        return jsonify({'error': err.messages}), 400
+    user = UserModel.query.filter_by(username=userData["username"]).first_or_404()
+    if not pbkdf2_sha256.verify(userData["password"], user.password):
+        return "There is an error in inputted data", 400
+    token = create_access_token(identity=user.id)
+    return {"token": token}
+
+
 @app.get("/user/<user_id>")
 def get_user(user_id):
     user = UserModel.query.get_or_404(user_id)
@@ -36,23 +52,19 @@ def create_user():
         user_validation.load(newUserData)
     except ValidationError as err:
         return jsonify({'error': err.messages}), 400
-    user = UserModel(name=newUserData["name"])
+    user = UserModel(username=newUserData["username"], password=pbkdf2_sha256.hash(newUserData["password"]))
     try:
         db.session.add(user)
         db.session.commit()
     except IntegrityError:
-        return "There is en error in inputted data", 400
-        # abort(
-        #     400,
-        #     message="There is en error in inputted data"
-        # )
-    user_dict = {"id": user.id, "name": user.name}
+        return "There is an error in inputted data", 400
+    user_dict = {"id": user.id, "username": user.username}
     return jsonify(user_dict), 200
 
 
 @app.get("/users")
 def get_users():
-    return list({"id": user.id, "name": user.name} for user in UserModel.query.all())
+    return list({"id": user.id, "username": user.username} for user in UserModel.query.all())
 
 
 # Work with category
@@ -76,11 +88,7 @@ def create_category():
         db.session.add(category)
         db.session.commit()
     except IntegrityError:
-        return "There is en error in inputted data", 400
-        # abort(
-        #     400,
-        #     message="There is en error in inputted data"
-        # )
+        return "There is an error in inputted data", 400
     return jsonify({"id": category.id, "name": category.name}), 200
 
 
@@ -137,11 +145,7 @@ def create_record():
         db.session.add(record)
         db.session.commit()
     except IntegrityError:
-        return "There is en error in inputted data", 400
-        # abort(
-        #     400,
-        #     message="There is en error in inputted data"
-        # )
+        return "There is an error in inputted data", 400
     response = {
         "id": record.id,
         "sum": record.sum,
@@ -186,11 +190,7 @@ def create_account():
         db.session.add(account)
         db.session.commit()
     except IntegrityError:
-        return "There is en error in inputted data", 400
-        # abort(
-        #     400,
-        #     message="There is en error in inputted data"
-        # )
+        return "There is an error in inputted data", 400
     return jsonify({"id": account.id, "sum": account.sum, "user_id": account.user_id}), 200
 
 
