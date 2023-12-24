@@ -14,6 +14,7 @@ services:
       DB_PASSWORD: "qwer1234"
       DB_NAME: "ssdtDB"
       DB_HOST: "db:5432"
+      JWT_SECRET_KEY: "240490998400956410422214518006442572391"
   db:
     image: postgres:15.4-alpine3.18
     environment:
